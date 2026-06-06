@@ -20,12 +20,15 @@ CLASS_NAMES = [
     "Normal_Eye",
     "Pterygium"
 ]
-
 @st.cache_resource
 def load_ai_model():
-    return load_model(
-        "final_model.keras", compile=False
-    )
+    model_path = "final_model.keras"
+
+    if not os.path.exists(model_path):
+        url = "https://drive.google.com/uc?id=1SrpLuT4TGg7K7_qYHD7qHu6gdtJncPwI"
+        gdown.download(url, model_path, quiet=False)
+
+    return load_model(model_path, compile=False)
 
 model = load_ai_model()
 
