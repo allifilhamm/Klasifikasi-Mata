@@ -24,7 +24,7 @@ CLASS_NAMES = [
 @st.cache_resource
 def load_ai_model():
     return load_model(
-        "/content/drive/MyDrive/Klasifikasi Mata/final_model.keras"
+        "final_model.keras", compile=False
     )
 
 model = load_ai_model()
