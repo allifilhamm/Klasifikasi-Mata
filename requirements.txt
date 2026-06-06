@@ -5,4 +5,4 @@ matplotlib
 pillow
 scikit-learn
 gdown
-tensorflow-cpu==2.16.1
+keras
