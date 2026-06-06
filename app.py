@@ -1,8 +1,8 @@
+%%writefile app.py
 import streamlit as st
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
-import os
 import gdown
 
 from PIL import Image
@@ -22,20 +22,11 @@ CLASS_NAMES = [
     "Pterygium"
 ]
 
-MODEL_FILE = "final_model.keras"
-FILE_ID = "1SrpLuT4TGg7K7_qYHD7qHu6gdtJncPwI"
-
 @st.cache_resource
 def load_ai_model():
-
-    if not os.path.exists(MODEL_FILE):
-        gdown.download(
-            f"https://drive.google.com/uc?id={FILE_ID}",
-            MODEL_FILE,
-            quiet=False
-        )
-
-    return load_model(MODEL_FILE)
+    return load_model(
+        "/content/drive/MyDrive/Klasifikasi Mata/final_model.keras"
+    )
 
 model = load_ai_model()
 
