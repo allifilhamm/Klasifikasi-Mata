@@ -114,15 +114,15 @@ if uploaded_file is not None:
     col_seg, col_cam = st.columns(2)
 
     with col_seg:
-        st.subheader("ROI Segmentation (Otsu Method)")
+        st.subheader("ORSASM Segmentation")
         img_cv = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
         gray = cv2.cvtColor(img_cv, cv2.COLOR_BGR2GRAY)
-
+        
         _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
         
         st.image(
             thresh,
-            caption="Segmented ROI (Sklera & Iris Tetap Terjaga)",
+            caption="ORSASM Segmented ROI",
             use_container_width=True
         )
 
