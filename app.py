@@ -37,45 +37,36 @@ model = load_ai_model()
 
 def generate_gradcam(img_array, model, sub_model_name="resnet50", last_conv_layer_name="conv5_block3_out"):
     resnet_model = model.get_layer(sub_model_name)
-
     grad_model = tf.keras.models.Model(
         inputs=[resnet_model.inputs],
         outputs=[resnet_model.get_layer(last_conv_layer_name).output, resnet_model.output]
     )
-
+    
     with tf.GradientTape() as tape:
         last_conv_layer_output, resnet_features = grad_model(img_array)
-
         x = model.get_layer("global_average_pooling2d")(resnet_features)
         x = model.get_layer("dense")(x)
         x = model.get_layer("dropout")(x)
         preds = model.get_layer("dense_1")(x)
-
+        
         pred_index = tf.argmax(preds[0])
         class_channel = preds[:, pred_index]
 
     grads = tape.gradient(class_channel, last_conv_layer_output)
-
     pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
-
     last_conv_layer_output = last_conv_layer_output[0]
     heatmap = last_conv_layer_output @ pooled_grads[..., tf.newaxis]
     heatmap = tf.squeeze(heatmap)
-
     heatmap = tf.maximum(heatmap, 0) / tf.math.reduce_max(heatmap)
     return heatmap.numpy()
 
-def superimpose_gradcam(img_pil, heatmap, alpha=0.5):
+def superimpose_gradcam(img_pil, heatmap, alpha=0.45):
     img_cv = cv2.cvtColor(np.array(img_pil), cv2.COLOR_RGB2BGR)
-
     heatmap = cv2.resize(heatmap, (img_cv.shape[1], img_cv.shape[0]))
-
     heatmap = np.uint8(255 * heatmap)
     heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
-
     superimposed_img = heatmap * alpha + img_cv
     superimposed_img = np.clip(superimposed_img, 0, 255).astype(np.uint8)
-
     return cv2.cvtColor(superimposed_img, cv2.COLOR_BGR2RGB)
 
 st.sidebar.title("🏥 Medical Eye AI System")
@@ -119,18 +110,31 @@ if uploaded_file is not None:
     st.pyplot(fig)
 
     st.markdown("---")
-    st.subheader("Grad-CAM Visualization")
-    st.info("Peta panas (heatmap) di bawah menunjukkan area spesifik pada mata yang menjadi fokus utama kecerdasan buatan (AI) dalam menegakkan diagnosis.")
 
-    try:
-        heatmap = generate_gradcam(img_array, model, sub_model_name="resnet50", last_conv_layer_name="conv5_block3_out")
+    col_seg, col_cam = st.columns(2)
+n)
+    with col_seg:
+        st.subheader("ROI Segmentation (Otsu Method)")
+        img_cv = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+        gray = cv2.cvtColor(img_cv, cv2.COLOR_BGR2GRAY)
 
-        gradcam_result = superimpose_gradcam(image, heatmap, alpha=0.45)
-
+        _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        
         st.image(
-            gradcam_result,
-            caption=f"Grad-CAM Heatmap Focus Area untuk Deteksi: {pred_class}",
+            thresh,
+            caption="Segmented ROI (Sklera & Iris Tetap Terjaga)",
             use_container_width=True
         )
-    except Exception as e:
-        st.error(f"Gagal memuat visualisasi Grad-CAM. Terjadi error pada layer internal: {e}")
+
+    with col_cam:
+        st.subheader("Grad-CAM Visualization")
+        try:
+            heatmap = generate_gradcam(img_array, model, sub_model_name="resnet50", last_conv_layer_name="conv5_block3_out")
+            gradcam_result = superimpose_gradcam(image, heatmap, alpha=0.45)
+            st.image(
+                gradcam_result,
+                caption=f"Grad-CAM Heatmap untuk Deteksi: {pred_class}",
+                use_container_width=True
+            )
+        except Exception as e:
+            st.error(f"Gagal memuat visualisasi Grad-CAM: {e}")
