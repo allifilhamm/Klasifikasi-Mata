@@ -110,9 +110,9 @@ if uploaded_file is not None:
     st.pyplot(fig)
 
     st.markdown("---")
-
+    
     col_seg, col_cam = st.columns(2)
-n)
+
     with col_seg:
         st.subheader("ROI Segmentation (Otsu Method)")
         img_cv = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
